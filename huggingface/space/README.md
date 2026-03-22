@@ -2,7 +2,7 @@
 title: ITIL Reflexion Agent
 emoji: 🔄
 colorFrom: purple
-colorTo: emerald
+colorTo: green
 sdk: gradio
 sdk_version: 5.23.0
 app_file: app.py
@@ -16,7 +16,7 @@ tags:
   - servicenow
   - ai-agent
   - itsm
-short_description: AI agent that iteratively improves ITIL Change Management RFCs
+short_description: AI agent that improves ITIL Change Management RFCs
 ---
 
 # ITIL Reflexion Agent
