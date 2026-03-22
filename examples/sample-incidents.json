@@ -1,0 +1,90 @@
+[
+  {
+    "id": "INC-2025-NET-001",
+    "title": "Core switch fabric degradation causing packet loss on VLAN 200",
+    "severity": "P1",
+    "category": "Network Infrastructure",
+    "description": "Nexus 9000 core switch pair experiencing 3-5% packet loss on VLAN 200 (production application tier). Affecting 45 application servers. Root cause traced to outdated NX-OS firmware with known bug CSCvz12345. Temporary mitigation via traffic redistribution across backup path.",
+    "affected_ci": "SW-CORE-01, SW-CORE-02, VLAN-200-PROD",
+    "resolution": "Traffic rerouted via backup path. Permanent fix requires NX-OS upgrade from 9.3(8) to 10.2(5) on both core switches during maintenance window.",
+    "created": "2025-02-15T03:22:00Z",
+    "mttr_hours": 1.5
+  },
+  {
+    "id": "INC-2025-NET-002",
+    "title": "BGP session flapping with ISP causing intermittent internet outages",
+    "severity": "P1",
+    "category": "Network Connectivity",
+    "description": "Primary BGP peering session with AT&T dropping every 15-20 minutes. 200+ users experiencing 30-60 second internet outages during failover to secondary ISP. Issue started after ISP maintenance. MTU mismatch suspected on ISP side.",
+    "affected_ci": "RTR-EDGE-01, BGP-PEER-ATT-PRIMARY",
+    "resolution": "Temporary fix: reduced MTU to 1400 on edge router interface. ISP confirmed MTU issue on their PE router, fix scheduled for their next maintenance window.",
+    "created": "2025-02-18T14:10:00Z",
+    "mttr_hours": 3.0
+  },
+  {
+    "id": "INC-2025-NET-003",
+    "title": "Wireless controller failover failure leaving Building B without WiFi",
+    "severity": "P2",
+    "category": "Wireless Infrastructure",
+    "description": "Primary WLC (WLC-01) crashed due to memory exhaustion from rogue AP detection module. Secondary WLC (WLC-02) failed to assume control of 120 access points in Building B due to stale HA configuration. 350 users without WiFi for 2 hours.",
+    "affected_ci": "WLC-01, WLC-02, AP-BLDG-B-ALL",
+    "resolution": "Manual failover performed. HA configuration resynchronized. Memory leak in rogue AP module tracked to firmware bug — upgrade needed.",
+    "created": "2025-02-22T09:45:00Z",
+    "mttr_hours": 2.0
+  },
+  {
+    "id": "INC-2025-NET-004",
+    "title": "Firewall rule misconfiguration blocking SAP traffic after change window",
+    "severity": "P1",
+    "category": "Security/Firewall",
+    "description": "After scheduled firewall policy update on FW-PROD-01, implicit deny rule blocked SAP RFC traffic on ports 3300-3399. Finance team unable to process month-end close for 4 hours. Change review process failed to catch SAP dependency.",
+    "affected_ci": "FW-PROD-01, SAP-PROD-APP-01, SAP-PROD-APP-02",
+    "resolution": "Emergency change to add SAP RFC allow rule. Root cause: change request did not include SAP traffic flow documentation. CAB review process needs improvement.",
+    "created": "2025-03-01T18:00:00Z",
+    "mttr_hours": 4.0
+  },
+  {
+    "id": "INC-2025-NET-005",
+    "title": "DNS resolution failures during datacenter UPS maintenance",
+    "severity": "P2",
+    "category": "DNS/Infrastructure",
+    "description": "Both internal DNS servers (DNS-01, DNS-02) in DC-1 lost power simultaneously during UPS battery replacement. 500+ clients unable to resolve internal hostnames for 8 minutes. External DNS failover to cloud DNS worked but internal zones were unavailable.",
+    "affected_ci": "DNS-01, DNS-02, UPS-DC1-RACK3",
+    "resolution": "DNS restored after UPS maintenance. Need to deploy DNS-03 in DC-2 for geographic redundancy. Internal DNS should not have single-site dependency.",
+    "created": "2025-03-05T06:30:00Z",
+    "mttr_hours": 0.15
+  },
+  {
+    "id": "INC-2025-NET-006",
+    "title": "VPN concentrator reaching 95% session capacity during remote work surge",
+    "severity": "P2",
+    "category": "Remote Access",
+    "description": "GlobalProtect VPN concentrator VPN-01 hit 950 of 1000 session limit during snowstorm work-from-home event. New connections being refused. VPN-02 (backup) not configured for load sharing, only cold standby.",
+    "affected_ci": "VPN-01, VPN-02, PAN-MGMT-01",
+    "resolution": "Temporary: increased session limit to 1200 (within hardware capacity). Need active-active VPN configuration and capacity planning for 1500+ concurrent sessions.",
+    "created": "2025-03-08T08:15:00Z",
+    "mttr_hours": 0.5
+  },
+  {
+    "id": "INC-2025-NET-007",
+    "title": "MPLS circuit between HQ and DR site showing elevated latency",
+    "severity": "P3",
+    "category": "WAN/MPLS",
+    "description": "MPLS circuit MPLS-HQ-DR showing 45ms latency (normally 12ms) and 0.1% packet loss. Database replication between sites falling behind. ISP reports fiber degradation on intermediate node. Affecting DR readiness SLA.",
+    "affected_ci": "MPLS-HQ-DR, RTR-WAN-HQ, RTR-WAN-DR",
+    "resolution": "ISP dispatched fiber repair crew. Temporary traffic shifted to backup internet VPN tunnel. DR replication caught up within 2 hours of reroute.",
+    "created": "2025-03-10T11:00:00Z",
+    "mttr_hours": 6.0
+  },
+  {
+    "id": "INC-2025-NET-008",
+    "title": "Network monitoring blind spot — 30 switches missing from SNMP polling",
+    "severity": "P3",
+    "category": "Monitoring",
+    "description": "Quarterly audit revealed 30 access-layer switches not being monitored by SolarWinds. Switches were deployed 6 months ago but never added to monitoring. Two of these switches had failing power supplies that went undetected.",
+    "affected_ci": "SW-ACCESS-FLOOR3-*, SW-ACCESS-FLOOR4-*, SOLARWINDS-PROD",
+    "resolution": "All 30 switches added to monitoring. Two PSU replacements ordered. Need automated discovery and onboarding process for new network devices.",
+    "created": "2025-03-12T14:30:00Z",
+    "mttr_hours": 8.0
+  }
+]

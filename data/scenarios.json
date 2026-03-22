@@ -1,0 +1,87 @@
+{
+  "db-migration": {
+    "id": "db-migration",
+    "name": "Database Migration - PostgreSQL 16 Upgrade",
+    "category": "Infrastructure",
+    "rfc_id": "RFC-2024-DB-001",
+    "description": "Production PostgreSQL database cluster upgrade from 14.8 to 16.2",
+    "estimated_cost": "$125,000",
+    "business_value": "30% query performance improvement, extended security support through 2028, advanced partitioning reducing storage costs by 15%",
+    "timeline": "4-week phased rollout",
+    "affected_services": [
+      "Payment API", "User Authentication", "Order Processing",
+      "Inventory Management", "Analytics Pipeline", "Customer Portal Backend",
+      "Admin Dashboard API", "Reporting Service", "Notification Engine", "Search Service"
+    ],
+    "risk_factors": [
+      "Zero-downtime requirement for payment processing (24/7 availability SLA)",
+      "30TB total data volume requires careful validation and extended migration time",
+      "12 legacy stored procedures need rewrite for PostgreSQL 16 compatibility",
+      "Peak traffic: 50,000 transactions/minute during business hours",
+      "Cross-region replication lag must stay under 100ms",
+      "Payment compliance requires encrypted connections throughout migration",
+      "Legacy connection pooling may need reconfiguration",
+      "Foreign key cascades in order/payment tables need validation"
+    ],
+    "rollback_plan": "Automated failback to PostgreSQL 14.8 within 15 minutes using point-in-time recovery. Blue-green deployment ensures instant traffic cutover. Tested in staging environment with 3 successful rollback drills.",
+    "testing_completed": "Load testing at 150% peak capacity (75,000 TPS), 72-hour soak test showing no memory leaks, chaos engineering scenarios including primary failure and network partitions, all stored procedures validated"
+  },
+  "security-patch": {
+    "id": "security-patch",
+    "name": "Security Patch - Critical Log4j Vulnerability",
+    "category": "Security",
+    "rfc_id": "RFC-2024-SEC-001-EMERGENCY",
+    "description": "Emergency remediation of CVE-2021-44228 affecting 340 Java services",
+    "estimated_cost": "$95,000 (emergency response)",
+    "business_value": "Eliminate CVSS 10.0 critical vulnerability, prevent potential $50M+ data breach exposure, maintain SOC2 Type II and PCI-DSS compliance, protect 2.5M customer records",
+    "timeline": "Emergency 72-hour deployment window",
+    "affected_services": [
+      "All Java microservices (340 services)", "Apache Kafka Clusters",
+      "ElasticSearch Clusters", "Custom admin tools", "Third-party integrations",
+      "WebSocket servers", "Batch processing jobs", "Internal monitoring tools",
+      "Developer tools", "CI/CD pipeline components"
+    ],
+    "risk_factors": [
+      "Actively exploited in the wild with confirmed attacks on financial services",
+      "CVSS score 10.0 - maximum severity with remote code execution",
+      "Some legacy services require code changes beyond simple library updates",
+      "Testing window compressed from 2 weeks to 48 hours due to active exploitation",
+      "Requires coordination across 8 engineering teams in emergency mode",
+      "340 services must be patched - any missed service is critical exposure",
+      "Production deployment during business hours due to urgency",
+      "Third-party libraries may have transitive Log4j dependencies",
+      "Container image rebuilds for 85 ECS services",
+      "Lambda functions require redeployment of 28 functions"
+    ],
+    "rollback_plan": "Service-by-service rollback with blue-green deployment for critical services. Instant failback (<30 seconds) for payment/auth via ALB target group switching. 24/7 war room staffed with L3 engineers. WAF rules active as mitigation layer during rollback.",
+    "testing_completed": "Vulnerability scanning with Qualys, comprehensive smoke test suite (1,247 tests), security team red team penetration testing, rollback procedures validated in 3 drills, post-deployment monitoring configured"
+  },
+  "cost-optimization": {
+    "id": "cost-optimization",
+    "name": "Cloud Cost Optimization - Multi-Region Auto-Scaling",
+    "category": "Infrastructure",
+    "rfc_id": "RFC-2024-CLOUD-002",
+    "description": "Intelligent auto-scaling across 3 AWS regions to reduce cloud spend by $2.1M annually",
+    "estimated_cost": "$180,000 (implementation)",
+    "business_value": "$2.1M annual savings (validated), 40% improved resource efficiency, better user experience during traffic spikes, 99.95% SLA maintenance",
+    "timeline": "8-week phased deployment across us-east-1, eu-west-1, ap-southeast-1",
+    "affected_services": [
+      "Web Frontend (CDN)", "API Gateway", "Lambda Functions", "ECS Clusters",
+      "RDS Read Replicas", "ElastiCache Clusters", "S3 Static Assets",
+      "CloudFront Distributions", "Application Load Balancers", "NAT Gateways"
+    ],
+    "risk_factors": [
+      "Aggressive scale-down could impact user experience during unexpected spikes",
+      "Complex cross-region coordination requires careful orchestration",
+      "Current monthly AWS bill: $3.2M (need to validate 65% savings claim)",
+      "Peak traffic variability: 10x difference between off-peak and peak",
+      "Lambda cold start times could delay scaling responses (target: <2 seconds)",
+      "CloudWatch metric collection lag may cause scaling delays",
+      "Cost anomaly detection thresholds need fine-tuning",
+      "Regional failover during scaling events needs validation",
+      "NAT Gateway costs may not scale down proportionally"
+    ],
+    "rollback_plan": "Revert to static capacity with 30-minute manual override. Minimum baseline 50 instances per region. Lambda functions disabled via feature flag. Automated rollback on sustained error rate >2%.",
+    "testing_completed": "Black Friday simulation (5x load), regional failover testing, cost modeling validation showing 63-67% savings over 90-day test, latency impact <5ms P99, chaos engineering including Lambda failure scenarios"
+  }
+}

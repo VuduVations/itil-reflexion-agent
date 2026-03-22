@@ -1,0 +1,173 @@
+{
+  "db-migration": [
+    {
+      "id": "INC-2024-DB-001",
+      "title": "Slow query performance on payment processing tables",
+      "severity": "P2",
+      "category": "Database Performance",
+      "description": "Payment API response times increased from 45ms to 380ms during peak hours. Query execution plans show sequential scans on transaction_history table (2.1B rows). PostgreSQL 14 lacks advanced partitioning features needed for optimal performance.",
+      "affected_ci": "DB-PROD-PG-01",
+      "resolution": "Temporary index added. Long-term fix requires PostgreSQL 16 native partitioning.",
+      "created": "2024-09-15T08:30:00Z",
+      "mttr_hours": 4.5
+    },
+    {
+      "id": "INC-2024-DB-002",
+      "title": "Connection pool exhaustion during Black Friday load",
+      "severity": "P1",
+      "category": "Database Connectivity",
+      "description": "PgBouncer connection pool saturated at 1000 connections causing 502 errors for 12 minutes. PostgreSQL 14's connection handling lacks improvements available in 16.",
+      "affected_ci": "DB-PROD-PG-01, LB-DB-PROD-01",
+      "resolution": "Emergency pool size increase to 1500. Need PG16's improved connection multiplexing.",
+      "created": "2024-11-29T14:22:00Z",
+      "mttr_hours": 0.5
+    },
+    {
+      "id": "INC-2024-DB-003",
+      "title": "Replication lag spike causing stale reads in analytics",
+      "severity": "P3",
+      "category": "Database Replication",
+      "description": "Analytics replica DB-PROD-PG-04 showed 850ms replication lag during batch processing window. PostgreSQL 16 logical replication improvements would reduce this to <100ms.",
+      "affected_ci": "DB-PROD-PG-04",
+      "resolution": "Batch job rescheduled to off-peak. PG16 upgrade needed for permanent fix.",
+      "created": "2024-10-03T22:15:00Z",
+      "mttr_hours": 1.0
+    },
+    {
+      "id": "INC-2024-DB-004",
+      "title": "Stored procedure failure after minor patch",
+      "severity": "P2",
+      "category": "Database Compatibility",
+      "description": "3 of 12 legacy stored procedures failed after PostgreSQL 14.8.1 minor patch. Procedures use deprecated syntax that must be rewritten for any future version.",
+      "affected_ci": "DB-PROD-PG-01",
+      "resolution": "Reverted patch. All 12 stored procedures flagged for rewrite during PG16 migration.",
+      "created": "2024-10-20T11:00:00Z",
+      "mttr_hours": 2.0
+    },
+    {
+      "id": "INC-2024-DB-005",
+      "title": "Security scan flagged PostgreSQL 14 CVE",
+      "severity": "P2",
+      "category": "Security",
+      "description": "Quarterly security scan identified 3 CVEs in PostgreSQL 14.8 with patches only available in 14.10+. PostgreSQL 16 addresses all known CVEs and provides extended support until 2028.",
+      "affected_ci": "DB-PROD-PG-01, DB-PROD-PG-02, DB-PROD-PG-03, DB-PROD-PG-04",
+      "resolution": "Mitigated with network ACLs. Full remediation requires upgrade to PG16.",
+      "created": "2024-11-01T09:00:00Z",
+      "mttr_hours": 8.0
+    }
+  ],
+  "security-patch": [
+    {
+      "id": "INC-2024-SEC-001",
+      "title": "WAF detected Log4j exploit attempts targeting API gateway",
+      "severity": "P1",
+      "category": "Security - Active Threat",
+      "description": "CloudFlare WAF blocked 127 exploit attempts in 24 hours targeting Log4Shell CVE-2021-44228. Attack patterns match known financial services targeting campaigns. All Java-based services potentially vulnerable.",
+      "affected_ci": "WAF-CLOUDFLARE-PROD, INTEGRATION-API-BRIDGE",
+      "resolution": "WAF rules blocking attempts. Permanent fix requires patching all 340 Java services to Log4j 2.17.1.",
+      "created": "2024-12-10T03:15:00Z",
+      "mttr_hours": 0.25
+    },
+    {
+      "id": "INC-2024-SEC-002",
+      "title": "Vulnerability scan identified 340 services with Log4j 2.14.1",
+      "severity": "P1",
+      "category": "Security - Vulnerability",
+      "description": "Qualys scan confirmed CVE-2021-44228 (CVSS 10.0) present in 340 Java microservices, including payment processing, authentication, and data pipeline services. RCE possible on all affected services.",
+      "affected_ci": "APP-JAVA-SERVICES (340 services)",
+      "resolution": "Emergency patching authorized. All services must upgrade to Log4j 2.17.1.",
+      "created": "2024-12-10T08:00:00Z",
+      "mttr_hours": null
+    },
+    {
+      "id": "INC-2024-SEC-003",
+      "title": "Kafka cluster running vulnerable Log4j version",
+      "severity": "P1",
+      "category": "Security - Infrastructure",
+      "description": "Production Kafka cluster (12 brokers, 450 topics, 2.1M msg/sec) running vulnerable Log4j. Exploitation could compromise message integrity across all dependent services.",
+      "affected_ci": "KAFKA-PROD-CLUSTER-01, KAFKA-PROD-CLUSTER-02",
+      "resolution": "Requires Kafka upgrade with Log4j 2.17.1 dependency.",
+      "created": "2024-12-10T09:30:00Z",
+      "mttr_hours": null
+    },
+    {
+      "id": "INC-2024-SEC-004",
+      "title": "Elasticsearch clusters vulnerable to Log4Shell",
+      "severity": "P1",
+      "category": "Security - Infrastructure",
+      "description": "All 3 Elasticsearch clusters (production 15TB, logging 8TB, metrics 3TB) running vulnerable versions. Total 19 nodes exposed. Exploitation could lead to data exfiltration.",
+      "affected_ci": "ELASTIC-PROD-001, ELASTIC-LOGGING-001, ELASTIC-METRICS-001",
+      "resolution": "Requires Elasticsearch upgrade to patched version.",
+      "created": "2024-12-10T10:00:00Z",
+      "mttr_hours": null
+    },
+    {
+      "id": "INC-2024-SEC-005",
+      "title": "Compliance team flagged SOC2 risk from unpatched vulnerability",
+      "severity": "P1",
+      "category": "Compliance",
+      "description": "Legal and compliance teams confirm CVSS 10.0 vulnerability with active exploitation constitutes immediate SOC2 Type II and PCI-DSS compliance violation if not remediated within 72 hours.",
+      "affected_ci": "All Java-based services",
+      "resolution": "Board emergency authorization granted. 72-hour remediation window approved.",
+      "created": "2024-12-10T11:00:00Z",
+      "mttr_hours": null
+    }
+  ],
+  "cost-optimization": [
+    {
+      "id": "INC-2024-COST-001",
+      "title": "AWS bill exceeded budget by 40% in November",
+      "severity": "P2",
+      "category": "Cost Management",
+      "description": "November AWS spend hit $4.5M against $3.2M budget. Root cause: auto-scaling groups running at maximum capacity 24/7 despite 10x traffic variability. Off-peak utilization averaging 12%.",
+      "affected_ci": "ASG-WEB-PROD-US, ASG-API-PROD-US, all regional ASGs",
+      "resolution": "Temporary manual scaling schedule implemented. Need intelligent auto-scaling.",
+      "created": "2024-12-01T08:00:00Z",
+      "mttr_hours": 24.0
+    },
+    {
+      "id": "INC-2024-COST-002",
+      "title": "NAT Gateway data transfer costs spiking unexpectedly",
+      "severity": "P3",
+      "category": "Cost Optimization",
+      "description": "NAT Gateway costs reached $180K/month across 3 regions. Analysis shows 60% of traffic is to S3 and DynamoDB which could use VPC endpoints at zero cost.",
+      "affected_ci": "NAT-GATEWAY-US-1A, NAT-GATEWAY-US-1B, NAT-GATEWAY-EU-1A, NAT-GATEWAY-AP-1A",
+      "resolution": "VPC endpoints being evaluated. Requires auto-scaling architecture review.",
+      "created": "2024-11-15T14:00:00Z",
+      "mttr_hours": 168.0
+    },
+    {
+      "id": "INC-2024-COST-003",
+      "title": "Reserved Instance coverage dropped to 35%",
+      "severity": "P3",
+      "category": "Cost Optimization",
+      "description": "With static over-provisioning, RI coverage is only 35% of actual capacity. Dynamic auto-scaling would allow better RI matching for baseline capacity, saving an estimated $600K annually.",
+      "affected_ci": "COST-EXPLORER-INTEGRATION",
+      "resolution": "Cannot optimize RIs until scaling patterns are predictable. Requires auto-scaling implementation.",
+      "created": "2024-11-20T10:00:00Z",
+      "mttr_hours": null
+    },
+    {
+      "id": "INC-2024-COST-004",
+      "title": "Performance degradation during traffic spike - scaling too slow",
+      "severity": "P2",
+      "category": "Performance",
+      "description": "Flash sale caused 8x traffic increase. Manual scaling took 15 minutes to respond, causing 3 minutes of degraded service (P99 latency 2.8s vs 200ms target). Auto-scaling needed.",
+      "affected_ci": "ASG-WEB-PROD-US, ALB-PROD-US-EAST-1, ELASTICACHE-PROD-US",
+      "resolution": "Temporary pre-scaling for known events. Need predictive auto-scaling.",
+      "created": "2024-11-25T19:30:00Z",
+      "mttr_hours": 0.25
+    },
+    {
+      "id": "INC-2024-COST-005",
+      "title": "CFO escalation: Cloud spend exceeding board-approved budget",
+      "severity": "P1",
+      "category": "Financial Governance",
+      "description": "CFO formally escalated cloud spend overrun to CTO. YTD spend $36M against $30M budget. Board requires cost reduction plan by Q1. Auto-scaling projected to save $2.1M annually.",
+      "affected_ci": "COST-ANOMALY-DETECTOR",
+      "resolution": "Auto-scaling implementation approved with $180K budget. 15-month payback period.",
+      "created": "2024-12-05T09:00:00Z",
+      "mttr_hours": null
+    }
+  ]
+}

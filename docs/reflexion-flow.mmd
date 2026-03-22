@@ -1,0 +1,87 @@
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#6366f1', 'primaryTextColor': '#f4f4f5', 'primaryBorderColor': '#818cf8', 'lineColor': '#a78bfa', 'secondaryColor': '#1e1b4b', 'tertiaryColor': '#0f172a'}}}%%
+
+graph TD
+    START(["START"]) --> RETRIEVE
+
+    subgraph INPUT ["Data Input"]
+        DEMO["Demo Scenarios"]
+        UPLOAD["Upload JSON/CSV"]
+        SNOW["ServiceNow MCP"]
+    end
+
+    INPUT --> RETRIEVE
+
+    RETRIEVE["Retrieve Data\nLoad incidents + CMDB"]
+    RETRIEVE --> META
+
+    subgraph LOOP ["Reflexion Loop - max 3 iterations"]
+        META["Meta-Learning\nAnalyze score delta\nSelect strategy"]
+        META --> GENERATE
+
+        GENERATE["Actor Agent\nGenerate/improve RFC\nTemp: 0.7"]
+        GENERATE --> EVALUATE
+
+        EVALUATE["Evaluator Agent\nScore on 6 dimensions\nTemp: 0.3"]
+        EVALUATE --> DECIDE
+
+        DECIDE{"Score >= 90\nOR iter >= 3?"}
+
+        DECIDE -->|No| REFLECT
+        REFLECT["Reflector Agent\nCreate actionable feedback\nTemp: 0.5"]
+        REFLECT --> INCREMENT
+        INCREMENT["Increment\niteration += 1"]
+        INCREMENT --> META
+    end
+
+    DECIDE -->|Yes| FINALIZE
+
+    FINALIZE["Finalize Results\nCompile iteration data"]
+    FINALIZE --> CAB
+
+    CAB["CAB Summary\nExecutive briefing"]
+    CAB --> DONE(["END"])
+
+    subgraph STRATEGIES ["Meta-Learning Strategies"]
+        direction LR
+        S1["standard\nIteration 1"]
+        S2["aggressive\ndelta > 15"]
+        S3["steady\ndelta > 8"]
+        S4["focus\ndelta > 0"]
+        S5["reset\ndelta <= 0"]
+    end
+
+    META -.-> STRATEGIES
+
+    subgraph SCORES ["6-Dimension Scoring"]
+        direction LR
+        SC1["Overall\nQuality"]
+        SC2["ITIL\nCompliance"]
+        SC3["Risk\nLevel"]
+        SC4["Business\nValue"]
+        SC5["Technical\nReadiness"]
+        SC6["Stakeholder\nConfidence"]
+    end
+
+    EVALUATE -.-> SCORES
+
+    subgraph PROVIDERS ["LLM Providers"]
+        direction LR
+        CLAUDE["Claude Sonnet 4\n~$0.20/run"]
+        GEMINI["Gemini Flash\nFree tier"]
+        GROQ["Groq Llama 3.3\nFree tier"]
+        GPT["GPT-4o\n~$0.15/run"]
+    end
+
+    GENERATE -.-> PROVIDERS
+
+    style START fill:#6366f1,stroke:#818cf8,color:#fff
+    style DONE fill:#22c55e,stroke:#4ade80,color:#fff
+    style DECIDE fill:#f59e0b,stroke:#fbbf24,color:#000
+    style RETRIEVE fill:#3b82f6,stroke:#60a5fa,color:#fff
+    style META fill:#8b5cf6,stroke:#a78bfa,color:#fff
+    style GENERATE fill:#a855f7,stroke:#c084fc,color:#fff
+    style EVALUATE fill:#f59e0b,stroke:#fbbf24,color:#000
+    style REFLECT fill:#06b6d4,stroke:#22d3ee,color:#fff
+    style INCREMENT fill:#6366f1,stroke:#818cf8,color:#fff
+    style FINALIZE fill:#10b981,stroke:#34d399,color:#fff
+    style CAB fill:#22c55e,stroke:#4ade80,color:#fff
