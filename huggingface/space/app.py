@@ -7,12 +7,15 @@ Uses Groq Llama 3.3 70B (free tier) for zero-cost inference.
 import os
 import json
 import time
+import traceback
 import gradio as gr
 from datetime import datetime, timezone
 
-# Ensure we use Groq for the free HF Space
-os.environ.setdefault("LLM_PROVIDER", "groq")
-os.environ.setdefault("LLM_MODEL", "llama-3.3-70b-versatile")
+# Use Google Gemini as primary — higher free tier limits (1M tokens/day vs 100K)
+# Groq is faster but rate-limits too quickly for a public demo
+os.environ["LLM_PROVIDER"] = "google"
+os.environ["LLM_MODEL"] = "gemini-2.0-flash"
+print("Using Google Gemini 2.0 Flash")
 
 from config import config
 from graph import reflexion_graph
@@ -72,12 +75,17 @@ def run_reflexion(scenario_name, max_iterations, progress=gr.Progress()):
     try:
         final_state = reflexion_graph.invoke(initial_state)
     except Exception as e:
+        error_detail = f"**Error:** {str(e)}\n\n```\n{traceback.format_exc()}\n```"
+        error_log = f"Error: {str(e)}"
+        if "api_key" in str(e).lower() or "auth" in str(e).lower():
+            error_log = "Error: GROQ_API_KEY not configured. Go to Space Settings → Secrets → add GROQ_API_KEY."
+            error_detail = f"**API Key Error:** GROQ_API_KEY is not set.\n\nGo to the Space **Settings** → **Variables and secrets** → **New secret** → Name: `GROQ_API_KEY`, Value: your Groq API key from console.groq.com"
         return (
-            f"**Error:** {str(e)}",
-            "Error",
-            "Error",
-            "Error",
-            "Error",
+            error_detail,
+            error_log,
+            error_log,
+            error_log,
+            error_log,
         )
 
     elapsed = round(time.time() - start_time, 1)
