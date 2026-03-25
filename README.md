@@ -59,6 +59,12 @@ curl -N -X POST http://localhost:8080/api/run-reflexion-stream \
 curl http://localhost:8080/api/scenarios
 ```
 
+## Live Demo & Traces
+
+- **Try it now** (no setup): [Hugging Face Space](https://huggingface.co/spaces/VuduVations/itil-reflexion-agent)
+- **See the full execution trace** (every prompt, score, token): [LangSmith Trace](https://smith.langchain.com/public/c1a48f49-01c3-4a77-ab46-e3b3d69069b8/r)
+- **ITSM benchmark dataset**: [Hugging Face Dataset](https://huggingface.co/datasets/VuduVations/itsm-change-management-benchmark)
+
 ## Demo Scenarios
 
 Three built-in scenarios work out of the box (no ServiceNow required):
