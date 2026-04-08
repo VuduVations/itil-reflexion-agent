@@ -141,21 +141,36 @@ def retrieve_data(state: RFCState) -> dict:
         if not cmdb_info.get("total_ci_count"):
             cmdb_info["total_ci_count"] = len(cmdb_info.get("items", []))
     else:
-        # Load from JSON fixtures
+        # Load fixtures for the scenario metadata (always)
         import os
         data_dir = config.data_dir
         scenario_id = state["scenario_id"]
 
-        with open(os.path.join(data_dir, "incidents.json")) as f:
-            all_incidents = json.load(f)
-        with open(os.path.join(data_dir, "cmdb.json")) as f:
-            all_cmdb = json.load(f)
         with open(os.path.join(data_dir, "scenarios.json")) as f:
             all_scenarios = json.load(f)
-
-        incidents = all_incidents.get(scenario_id, [])
-        cmdb_info = all_cmdb.get(scenario_id, {})
         scenario_meta = all_scenarios.get(scenario_id, {})
+
+        # If ServiceNow is connected, pull live data; otherwise use fixtures
+        if config.use_servicenow:
+            from tools import search_incidents, get_cmdb_info
+            _sync_emit(state, "initialization", f"Querying ServiceNow ({config.servicenow_instance or config.servicenow_mcp_url})...")
+            # Use scenario keywords as the query to get relevant incidents
+            query_map = {
+                "db-migration": "database",
+                "security-patch": "security",
+                "cost-optimization": "performance",
+            }
+            query = query_map.get(scenario_id, "")
+            incidents = search_incidents(query, scenario_id, n_results=10)
+            cmdb_info = get_cmdb_info(scenario_id)
+            _sync_emit(state, "initialization", f"ServiceNow returned {len(incidents)} incidents and {cmdb_info.get('total_ci_count', len(cmdb_info.get('items', [])))} CMDB items")
+        else:
+            with open(os.path.join(data_dir, "incidents.json")) as f:
+                all_incidents = json.load(f)
+            with open(os.path.join(data_dir, "cmdb.json")) as f:
+                all_cmdb = json.load(f)
+            incidents = all_incidents.get(scenario_id, [])
+            cmdb_info = all_cmdb.get(scenario_id, {})
 
     ci_count = cmdb_info.get("total_ci_count", len(cmdb_info.get("items", [])))
     _sync_emit(

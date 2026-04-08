@@ -75,6 +75,59 @@ Three built-in scenarios work out of the box (no ServiceNow required):
 | `security-patch` | Security | Emergency Log4Shell remediation for 340 services |
 | `cost-optimization` | Infrastructure | Multi-region auto-scaling saving $2.1M/year |
 
+## Verify the ServiceNow Integration Yourself
+
+The repo includes a script that populates a ServiceNow Personal Developer Instance (PDI) with scenario-specific CMDB items and incidents. You can validate the end-to-end integration in about 10 minutes.
+
+**1. Get a free ServiceNow PDI** (10 minutes)
+
+Sign up at [developer.servicenow.com](https://developer.servicenow.com) and request a Personal Developer Instance. You'll receive an instance URL and admin credentials by email.
+
+**2. Populate it with scenario data**
+
+```bash
+SERVICENOW_INSTANCE=https://devXXXXX.service-now.com \
+SERVICENOW_USERNAME=admin \
+SERVICENOW_PASSWORD='your-password' \
+python scripts/populate_servicenow_pdi.py
+```
+
+This creates 14 CMDB items and 11 incidents tagged with a `VUDU-` prefix so they're easy to identify in ServiceNow.
+
+**3. Run the agent against your PDI**
+
+```bash
+export SERVICENOW_INSTANCE=https://devXXXXX.service-now.com
+export SERVICENOW_USERNAME=admin
+export SERVICENOW_PASSWORD='your-password'
+export GOOGLE_API_KEY=your-free-gemini-key  # or ANTHROPIC_API_KEY, GROQ_API_KEY
+export LLM_PROVIDER=google
+
+python main.py
+```
+
+**4. Verify the connection**
+
+```bash
+curl http://localhost:8080/api/test-servicenow
+```
+
+You should see real incidents (INC0010001-INC0010011) and CMDB items (VUDU-DB-PROD-PG-01, VUDU-APP-PAYMENT-API, etc.) returned from your live PDI.
+
+**5. Run the Reflexion loop**
+
+Open the dashboard or call the API:
+
+```bash
+curl -X POST http://localhost:8080/api/run-reflexion \
+  -H "Content-Type: application/json" \
+  -d '{"scenario_id": "db-migration"}'
+```
+
+The agent will query your ServiceNow instance, filter to scenario-specific records (7 CMDB items, 5 incidents for db-migration), and run the full Reflexion loop against real data.
+
+---
+
 ## MCP Integration
 
 ### Exposing ITIL Tools

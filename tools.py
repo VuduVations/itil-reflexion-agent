@@ -51,7 +51,7 @@ def _load_json(filename: str) -> dict:
 def search_incidents(query: str, scenario_id: str = "db-migration", n_results: int = 5) -> list:
     """Search incident records. Priority: direct REST > MCP > fixtures."""
     if config.use_servicenow_direct:
-        return _servicenow_rest_search_incidents(query, n_results)
+        return _servicenow_rest_search_incidents(query, scenario_id, n_results)
     if config.use_servicenow:
         return _servicenow_mcp_search_incidents(query, n_results)
 
@@ -75,7 +75,7 @@ def search_incidents(query: str, scenario_id: str = "db-migration", n_results: i
 def get_cmdb_info(scenario_id: str = "db-migration", ci_id: Optional[str] = None) -> dict:
     """Get CMDB configuration item information. Priority: direct REST > MCP > fixtures."""
     if config.use_servicenow_direct:
-        return _servicenow_rest_get_cmdb(ci_id)
+        return _servicenow_rest_get_cmdb(ci_id, scenario_id)
     if config.use_servicenow:
         return _servicenow_mcp_get_cmdb(ci_id or scenario_id)
 
@@ -154,37 +154,67 @@ def _snow_rest_request(table: str, params: dict = None) -> list:
     return response.json().get("result", [])
 
 
-def _servicenow_rest_search_incidents(query: str, n_results: int) -> list:
-    """Search incidents via ServiceNow REST API."""
+# Scenario-specific filters for VUDU-tagged records in the PDI
+_SCENARIO_INCIDENT_KEYWORDS = {
+    "db-migration": "postgresql,database,connection pool,replication,stored procedure,cve",
+    "security-patch": "log4j,log4shell,cve-2021-44228,kafka,vulnerability",
+    "cost-optimization": "aws bill,nat gateway,auto-scaling,cost,traffic spike",
+}
+
+_SCENARIO_CMDB_PREFIXES = {
+    "db-migration": ["VUDU-DB", "VUDU-LB-DB", "VUDU-APP-PAYMENT", "VUDU-APP-AUTH"],
+    "security-patch": ["VUDU-APP-JAVA", "VUDU-WAF"],
+    "cost-optimization": ["VUDU-ASG", "VUDU-NAT"],
+}
+
+
+def _servicenow_rest_search_incidents(query: str, scenario_id: str = "", n_results: int = 10) -> list:
+    """Search incidents via ServiceNow REST API. Filters for VUDU-tagged scenario records."""
     try:
         params = {
             "sysparm_limit": n_results,
             "sysparm_fields": "number,short_description,priority,category,description,cmdb_ci,close_notes,sys_created_on,business_duration",
-            "sysparm_query": f"ORDERBYDESCsys_created_on",
         }
-        if query:
-            params["sysparm_query"] = f"short_descriptionLIKE{query}^ORdescriptionLIKE{query}^ORcategoryLIKE{query}^ORDERBYDESCsys_created_on"
+
+        # Always filter to VUDU-tagged incidents first
+        query_parts = ["short_descriptionLIKE[VUDU]"]
+
+        # Add scenario-specific keyword filter if scenario provided
+        if scenario_id and scenario_id in _SCENARIO_INCIDENT_KEYWORDS:
+            keywords = _SCENARIO_INCIDENT_KEYWORDS[scenario_id].split(",")
+            keyword_clauses = [f"short_descriptionLIKE{k}^ORdescriptionLIKE{k}" for k in keywords]
+            query_parts.append(f"^({'^OR'.join(keyword_clauses)})")
+        elif query:
+            query_parts.append(f"^short_descriptionLIKE{query}^ORdescriptionLIKE{query}")
+
+        params["sysparm_query"] = "".join(query_parts) + "^ORDERBYDESCsys_created_on"
 
         records = _snow_rest_request("incident", params)
-        # Map ServiceNow fields to our schema
         return [_map_snow_incident(r) for r in records]
     except Exception as e:
         print(f"ServiceNow REST error: {e}. Falling back to fixtures.")
         incidents = _load_json("incidents.json")
-        return list(incidents.values())[0][:n_results] if incidents else []
+        return incidents.get(scenario_id, [])[:n_results] if scenario_id else []
 
 
-def _servicenow_rest_get_cmdb(ci_id: Optional[str] = None) -> dict:
-    """Get CMDB items via ServiceNow REST API."""
+def _servicenow_rest_get_cmdb(ci_id: Optional[str] = None, scenario_id: str = "") -> dict:
+    """Get CMDB items via ServiceNow REST API. Filters for VUDU-tagged scenario CIs."""
     try:
         params = {
             "sysparm_fields": "name,sys_class_name,short_description,busines_criticality,operational_status",
+            "sysparm_limit": 50,
         }
+
         if ci_id:
             params["sysparm_query"] = f"name={ci_id}"
             params["sysparm_limit"] = 1
+        elif scenario_id and scenario_id in _SCENARIO_CMDB_PREFIXES:
+            prefixes = _SCENARIO_CMDB_PREFIXES[scenario_id]
+            clauses = [f"nameSTARTSWITH{p}" for p in prefixes]
+            params["sysparm_query"] = "^OR".join(clauses)
         else:
-            params["sysparm_limit"] = 50
+            # Default: pull any VUDU-tagged CI
+            params["sysparm_query"] = "nameSTARTSWITHVUDU-"
 
         records = _snow_rest_request("cmdb_ci", params)
         items = [_map_snow_cmdb(r) for r in records]
