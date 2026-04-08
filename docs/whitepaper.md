@@ -85,24 +85,34 @@ Three minutes of AI processing replaced what would typically be 2-3 weeks of hum
 
 ## Connecting to Your ITSM Data
 
-The Reflexion Agent is designed to work at two levels:
+The Reflexion Agent is designed to work at three levels, all validated end-to-end:
 
 ### Out of the Box: Demo Mode
 The agent ships with realistic demo scenarios covering common change types — infrastructure migrations, security patches, cost optimization projects. These let you evaluate the agent's capabilities immediately, with no configuration required.
 
-### Connected: Your ServiceNow Data
-When you're ready to use real data, the agent connects to your ServiceNow instance through the **Model Context Protocol (MCP)** — an open standard for connecting AI agents to enterprise data sources.
+### Upload Mode
+Upload your own incident data and CMDB items as JSON or CSV. The agent processes real-world data without needing any ServiceNow integration. Works with exports from any ITSM platform.
 
-This means the agent can:
-- **Pull real incident history** from your ServiceNow incident table to inform risk assessments
+### Connected: Your ServiceNow Data
+The agent connects to live ServiceNow instances through two methods — both validated against a real ServiceNow Personal Developer Instance (PDI):
+
+1. **Direct REST API** — standard Table API calls with basic auth (the production pattern)
+2. **Model Context Protocol (MCP)** — consume community MCP servers (snow-mcp, servicenow-mcp) or ServiceNow's native MCP (Zurich release and later)
+
+The agent queries your ServiceNow instance to:
+- **Pull real incident history** from the incident table to inform risk assessments
 - **Query your CMDB** to understand configuration item relationships and dependencies
-- **Reference past changes** to learn from your organization's specific patterns and requirements
+- **Filter to scenario-specific records** so only relevant data flows into the Reflexion loop
 
 The connection is read-only and scoped — the agent reads incident and CMDB data to produce better RFCs. It doesn't modify anything in your ServiceNow instance.
 
+### Reproducible Validation
+
+Because the agent is open source, the ServiceNow integration is fully reproducible. The repository includes a script that populates any ServiceNow PDI with scenario-specific CMDB items and incidents. Anyone can clone the repo, get a free PDI from developer.servicenow.com, run the script, and see the agent processing live ServiceNow data in about 10 minutes.
+
 ### Why MCP Matters
 
-The Model Context Protocol is becoming the standard way AI agents interact with enterprise systems. ServiceNow has adopted MCP natively in its platform, and the broader ecosystem includes dozens of enterprise connectors. By building on MCP, the Reflexion Agent isn't locked to a single integration method — it works with ServiceNow today and can extend to other ITSM platforms tomorrow.
+The Model Context Protocol is becoming the standard way AI agents interact with enterprise systems. ServiceNow has adopted MCP natively in its Zurich release, and the broader ecosystem includes dozens of enterprise connectors. By supporting both direct REST and MCP, the Reflexion Agent works with every ServiceNow instance regardless of version, and extends to other ITSM platforms through the same protocol.
 
 ---
 

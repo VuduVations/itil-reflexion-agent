@@ -1,6 +1,30 @@
 # ServiceNow Integration Guide
 
-This guide covers three ways to connect the ITIL Reflexion Agent to your ServiceNow instance, from simplest to most advanced.
+This guide covers four ways to connect the ITIL Reflexion Agent to your ServiceNow instance, from simplest to most advanced. The direct REST API path (Option 2) has been validated end-to-end against a live ServiceNow Personal Developer Instance.
+
+**Quick validation path** (10 minutes, free):
+
+```bash
+# 1. Get a free ServiceNow PDI at developer.servicenow.com
+# 2. Populate it with scenario-specific test data
+SERVICENOW_INSTANCE=https://devXXXXX.service-now.com \
+SERVICENOW_USERNAME=admin \
+SERVICENOW_PASSWORD='your-password' \
+python scripts/populate_servicenow_pdi.py
+
+# 3. Run the agent against your PDI
+export SERVICENOW_INSTANCE=https://devXXXXX.service-now.com
+export SERVICENOW_USERNAME=admin
+export SERVICENOW_PASSWORD='your-password'
+export GOOGLE_API_KEY=your-gemini-key
+export LLM_PROVIDER=google
+python main.py
+
+# 4. Verify the connection
+curl http://localhost:8080/api/test-servicenow
+```
+
+You should see real incidents (INC0010001-INC0010011) and VUDU-tagged CMDB items returned from your live PDI.
 
 ---
 

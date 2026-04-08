@@ -98,6 +98,9 @@ Use as few-shot examples or fine-tuning data for:
 - RFC quality evaluation models
 - Risk assessment classifiers
 
+### ServiceNow PDI Seeding
+The companion [ITIL Reflexion Agent repo](https://github.com/VuduVations/itil-reflexion-agent) includes a script that populates a ServiceNow Personal Developer Instance with scenario-specific CMDB items and incidents derived from this dataset. Use it to stand up a realistic ServiceNow test environment for evaluating ITSM-focused agents against live REST API calls.
+
 ## Dataset Structure
 
 ```

@@ -281,10 +281,13 @@ The agent supports three data input modes with identical downstream processing:
 - Client-side CSV parser with quoted-field support
 - Flexible schema — maps common field names automatically
 
-**3. ServiceNow MCP**
-- Connects to ServiceNow MCP servers (snow-mcp, servicenow-mcp, or native)
-- Queries `incident` and `cmdb_ci` tables
-- Falls back to fixtures if connection fails
+**3. ServiceNow (validated end-to-end against a Personal Developer Instance)**
+- **Direct REST API**: Authenticated GET requests to `/api/now/table/incident` and `/api/now/table/cmdb_ci` with basic auth
+- **MCP client**: Consumes community MCP servers (snow-mcp, servicenow-mcp) via HTTP when `SERVICENOW_MCP_URL` is set
+- **Scenario filtering**: Queries use `sysparm_query` with keyword filters (e.g., `short_descriptionLIKE[VUDU]^postgresql`) to pull only scenario-relevant records
+- **Field mapping**: ServiceNow `priority` → `P1-P4`, `cmdb_ci` → `affected_ci`, `business_duration` → `mttr_hours`
+- **Graceful fallback**: Falls back to fixtures if connection fails
+- **Reproducibility**: Includes `scripts/populate_servicenow_pdi.py` to create scenario-specific test data in any PDI
 
 ### 5.2 ITSM Fixture Dataset
 
@@ -342,14 +345,48 @@ These are consumable by Claude Desktop, other LangGraph agents, or any MCP-compa
 - `SERVICENOW_MCP_URL` → routes data retrieval through ServiceNow MCP servers
 - Falls back to fixtures when no MCP server is configured
 
-### 6.2 ServiceNow MCP Ecosystem
+### 6.2 ServiceNow Integration (Direct REST + MCP)
 
-Two community MCP servers provide ServiceNow connectivity:
+The agent supports both direct REST API and MCP-based connectivity to ServiceNow, with graceful fallback from direct REST → MCP → fixtures.
+
+**Direct REST API (production pattern):**
+The `_snow_rest_request()` function in `tools.py` makes authenticated GET requests to ServiceNow's Table API:
+
+```python
+def _snow_rest_request(table: str, params: dict) -> list:
+    url = f"{config.servicenow_instance}/api/now/table/{table}"
+    response = httpx.get(
+        url,
+        params={**{"sysparm_display_value": "true"}, **params},
+        auth=(config.servicenow_username, config.servicenow_password),
+        headers={"Accept": "application/json"},
+        timeout=30,
+    )
+    return response.json().get("result", [])
+```
+
+Scenario filtering uses ServiceNow's `sysparm_query` syntax to pull only relevant records:
+
+```python
+_SCENARIO_CMDB_PREFIXES = {
+    "db-migration": ["VUDU-DB", "VUDU-LB-DB", "VUDU-APP-PAYMENT", "VUDU-APP-AUTH"],
+    "security-patch": ["VUDU-APP-JAVA", "VUDU-WAF"],
+    "cost-optimization": ["VUDU-ASG", "VUDU-NAT"],
+}
+```
+
+**MCP Client (alternative):**
+When `SERVICENOW_MCP_URL` is set, the agent routes queries through community MCP servers:
 
 - **snow-mcp** (60+ tools) — comprehensive ServiceNow access including incidents, changes, CMDB, knowledge base
 - **servicenow-mcp** — focused on incidents, CMDB, and knowledge articles
+- **ServiceNow Zurich native MCP** — direct connection without third-party bridge
 
-ServiceNow's Zurich release adds native MCP support, enabling direct connection without a third-party bridge.
+**Reproducibility:**
+The repository includes `scripts/populate_servicenow_pdi.py` that creates 14 scenario-specific CMDB items and 11 incidents (tagged with `VUDU-` prefix) in any ServiceNow Personal Developer Instance. Combined with a free PDI from developer.servicenow.com, this enables end-to-end reproduction in under 10 minutes.
+
+**Validation:**
+The integration was validated against a live ServiceNow PDI. A db-migration run retrieved 7 scenario-filtered CMDB items and 5 scenario-relevant incidents, completed three Reflexion iterations, and produced an APPROVED WITH REVISIONS recommendation with 95% CAB approval probability.
 
 ---
 

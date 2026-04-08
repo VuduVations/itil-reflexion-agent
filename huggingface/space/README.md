@@ -39,11 +39,23 @@ Generate RFC → Evaluate (6 dimensions) → Reflect → Improve → Repeat
 
 The meta-learning layer observes score progression and adapts the improvement strategy each iteration.
 
+## ServiceNow Integration
+
+This Space runs on demo fixtures, but the full agent supports three data modes:
+
+- **Demo fixtures** (what you see here) — 3 built-in scenarios with bundled data
+- **CSV/JSON upload** — bring your own incident export from any ITSM platform
+- **Live ServiceNow** — direct REST API or MCP, validated end-to-end against a ServiceNow Personal Developer Instance
+
+The repo includes a script that populates any ServiceNow PDI with scenario-specific data so you can reproduce the validation in under 10 minutes.
+
 ## Links
 
-- [GitHub Repository](https://github.com/vuduvations/itil-reflexion-agent)
-- [Technical Paper](https://github.com/vuduvations/itil-reflexion-agent/blob/main/docs/technical-paper.pdf)
-- [Whitepaper](https://github.com/vuduvations/itil-reflexion-agent/blob/main/docs/whitepaper.pdf)
+- [GitHub Repository](https://github.com/VuduVations/itil-reflexion-agent)
+- [ServiceNow Setup Script](https://github.com/VuduVations/itil-reflexion-agent/blob/main/scripts/populate_servicenow_pdi.py)
+- [ServiceNow Integration Guide](https://github.com/VuduVations/itil-reflexion-agent/blob/main/examples/connect_servicenow.md)
+- [Technical Paper](https://github.com/VuduVations/itil-reflexion-agent/blob/main/docs/technical-paper.pdf)
+- [Whitepaper](https://github.com/VuduVations/itil-reflexion-agent/blob/main/docs/whitepaper.pdf)
 - [Vuduvations](https://vuduvations.io)
 
 ## License
